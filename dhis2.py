@@ -9,18 +9,6 @@ import os
 defaultFileName = "Facility Attendance - A Age(Attendance,Admissions, Deaths) vs Gender.xls"
 
 
-class Node:
-    def __init__(self, name, age):
-        self.name = name
-        self.children = []
-
-    def addChild(self, node):
-        self.children.append(node)
-
-    def getChildren(self):
-        return self.children
-
-
 def isFacility(txt):
     keywords = ["Facility", "Centre", "Clinic", "Disp",
                 "Hospital", "Previlage", "School", "Health"]
@@ -59,7 +47,17 @@ def checkIfFileDownloaded(dlPath, fileName):
             return True
     return False
 
-
+def buttonClick(xpath):
+    try:
+        def find(driver):
+            e = driver.find_element_by_xpath(xpath)
+            if (e.get_attribute("disabled")=='true'):
+                return False
+            return e
+        element = wait.until(find)
+    finally:
+        element.click()
+        print("finsihed")
 # Uses selenium
 # 1. Init with webdriver - Chrome
 driver = webdriver.Chrome("C:/Patrick/Programming/dhis2/chromedriver.exe")
@@ -104,21 +102,16 @@ nextYearButton = driver.find_element_by_xpath(
 yearCounter = 5
 
 
-# 4. Necessary time sleeps
+# 4. Necessary time sleeps & xPath set ups for buttons that get disabled
 time.sleep(1)
 main = driver.find_element_by_id("selectionTree")
 root = main.find_element_by_xpath(
     "./ul/li[@id='oustOrgUnits5DPBsdoE8b']")
-getReportButton = driver.find_element_by_xpath(
-    "//input[@type='button' and @value='Get report']")
-navBarButtons = driver.find_element_by_id(
-    "control").find_elements_by_xpath("./*")
-dataCriteriaButton = navBarButtons[0]
-downloadButton = navBarButtons[1]
+getReportButton = "//input[@type='button' and @value='Get report']"
+dataCriteriaButton = "//input[@type='button' and @id='dataButton']"
+downloadButton = "//input[@type='button' and @value='Download as Excel']"
 
 # 5. Traverse Tree
-states = main.find_elements_by_xpath(
-    "./ul/li[@id='oustOrgUnits5DPBsdoE8b']/ul/*")
 nodes = []
 stack = [root]
 while(stack):
@@ -138,13 +131,13 @@ while(stack):
             for month in range(1, periodCounter):
                 mo = str(month)
                 if not checkIfFileDownloaded(destPth, newFName + "-"+yr + "-"+mo + ".xls"):
-                    getReportButton.click()
+                    buttonClick(getReportButton)
                     time.sleep(4)
-                    downloadButton.click()
+                    buttonClick(downloadButton)
                     time.sleep(6)
                     moveToDownloadFolder(
                         dlPth, destPth, newFName + "-"+yr + "-"+mo, ".xls")
-                    dataCriteriaButton.click()
+                    buttonClick(dataCriteriaButton)
                     time.sleep(1)
                 else:
                     periodId.select_by_index(month-1)
