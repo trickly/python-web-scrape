@@ -1,6 +1,9 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
 import time
 import os
 defaultFileName = "Facility Attendance - A Age(Attendance,Admissions, Deaths) vs Gender.xls"
@@ -64,6 +67,9 @@ driver = webdriver.Chrome("C:/Patrick/Programming/dhis2/chromedriver.exe")
 dlPth = os.path.join(os.getenv('USERPROFILE'), 'Downloads')
 # destPth will just be a directory where I'll put all my (renamed) files in.
 destPth = dlPth+"\\dhis2data\\"
+
+wait = WebDriverWait(driver, 10)
+
 # Access url
 driver.get('https://dhis2nigeria.org.ng/dhis/dhis-web-dashboard/')
 
