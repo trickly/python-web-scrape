@@ -8,10 +8,36 @@ import time
 import os
 defaultFileName = "Facility Attendance - A Age(Attendance,Admissions, Deaths) vs Gender.xls"
 
+months = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+
 
 def isFacility(txt):
     keywords = ["Facility", "Centre", "Clinic", "Disp",
                 "Hospital", "Previlage", "School", "Health"]
+    if any(word in txt for word in keywords):
+        return True
+    else:
+        return False
+
+
+def isState(txt):
+    keywords = ["State"]
+    if any(word in txt for word in keywords):
+        return True
+    else:
+        return False
+
+
+def isLGA(txt):
+    keywords = ["Area", "Local", "Government"]
+    if any(word in txt for word in keywords):
+        return True
+    else:
+        return False
+
+
+def isWard(txt):
+    keywords = ["Ward"]
     if any(word in txt for word in keywords):
         return True
     else:
@@ -47,17 +73,20 @@ def checkIfFileDownloaded(dlPath, fileName):
             return True
     return False
 
+
 def buttonClick(xpath):
     try:
         def find(driver):
             e = driver.find_element_by_xpath(xpath)
-            if (e.get_attribute("disabled")=='true'):
+            if (e.get_attribute("disabled") == 'true'):
                 return False
             return e
         element = wait.until(find)
     finally:
         element.click()
         print("finsihed")
+
+
 # Uses selenium
 # 1. Init with webdriver - Chrome
 driver = webdriver.Chrome("C:/Patrick/Programming/dhis2/chromedriver.exe")
@@ -111,6 +140,10 @@ getReportButton = "//input[@type='button' and @value='Get report']"
 dataCriteriaButton = "//input[@type='button' and @id='dataButton']"
 downloadButton = "//input[@type='button' and @value='Download as Excel']"
 
+currentState = ""
+currentLGA = ""
+currentWard = ""
+
 # 5. Traverse Tree
 nodes = []
 stack = [root]
@@ -128,19 +161,19 @@ while(stack):
 
         for year in range(2019, 2014, -1):
             yr = str(year)
-            for month in range(1, periodCounter):
+            for month in range(periodCounter, 0, -1):
                 mo = str(month)
-                if not checkIfFileDownloaded(destPth, newFName + "-"+yr + "-"+mo + ".xls"):
+                if not checkIfFileDownloaded(destPth, currentState + "-"+currentLGA + "-"+currentWard + "-"+newFName + "-"+yr + "-"+mo + ".xls"):
                     buttonClick(getReportButton)
                     time.sleep(4)
                     buttonClick(downloadButton)
                     time.sleep(6)
                     moveToDownloadFolder(
-                        dlPth, destPth, newFName + "-"+yr + "-"+mo, ".xls")
+                        dlPth, destPth, currentState + "-"+currentLGA + "-"+currentWard + "-"+newFName + "-"+yr + "-"+mo, ".xls")
                     buttonClick(dataCriteriaButton)
                     time.sleep(1)
-                else:
-                    periodId.select_by_index(month-1)
+                if month is not 1:
+                    periodId.select_by_index(months[month-1])
 
             periodId.select_by_index(0)  # resets select(month)
             prevYearButton.click()
@@ -150,9 +183,13 @@ while(stack):
 
     # do file getting shit
     else:
-        # check what lvl of fed/state/lga/ward
-        # ....
-        # ....
+        # check what lvl (fed/state/lga/ward) of current node
+        if isState(name.text):
+            currentState = name.text
+        elif isLGA(name.text):
+            currentLGA = name.text
+        elif isWard(name.text):
+            currentWard = name.text
         # find children
         # expand
         print("- " + name.text)
@@ -164,5 +201,3 @@ while(stack):
             stack.insert(0, child)
 
 print("_____")
-for f in nodes:
-    print(f.find_element_by_xpath("./a").text)
