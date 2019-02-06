@@ -63,10 +63,8 @@ def moveToDownloadFolder(downloadPath, newPath, newFileName):
 
     # Create new file name
     fileDestination = newPath+newFileName
-
     os.rename(currentFile, fileDestination)
 
-    return
 
 
 def checkIfFileDownloaded(dlPath, fileName):
@@ -76,19 +74,38 @@ def checkIfFileDownloaded(dlPath, fileName):
     return False
 
 
-def logLastWorkedOn(filePath, fileName, fileStage):
-    os.remove(filePath + "log.txt")
-    f = open("log.txt", "w+")
-    f.write(fileStage + "\r" + fileName+"\n")
+def logLastWorkedOn(filePath, fileName, fileStage, indices):
+    try:
+        os.remove(filePath + "log.txt")
+    except FileNotFoundError:
+        pass
+    f = open (filePath +"log.txt", 'w')
+    print ("writing")
+    #f.write(fileStage + "\r" + fileName+"\n")
+    levels = '-'.join(str(x) for x in indices)
+    f.write(levels)
+    print (levels)
     f.close()
 
+
 def revertLastWorkedOn(filePath):
-    f = open(filePath + "log.txt", "r")
-    log = f.readline(2)
-    indices =log.split("-")
-    for i in indices:
-        print (i)
+    try:
+        f = open(filePath + "log.txt", 'r')
+        log = f.readlines()
+        f.close()
+    except FileNotFoundError:
+        log =""
+    print (log)
+    if log == "":
+        indices = [0, 0, 0]
+    else:
+        indices = log[0].split("-")
+        for index,i in enumerate(indices):
+            print (i)
+            indices[index] = int(i)
     return indices
+
+
 def buttonClick(xpath):
     try:
         def find(driver):
@@ -107,11 +124,6 @@ def buttonWait(xpath):
     try:
         element_present = EC.element_to_be_clickable((By.XPATH, xpath))
         WebDriverWait(driver, 10).until(element_present).click()
-        print("finished?")
-        print(element_present)
-        if(driver.find_element_by_xpath(xpath).get_attribute("disabled") == False):
-            print("visible")
-
     except TimeoutException:
         print("Timed out waiting for page to load")
 
@@ -122,7 +134,7 @@ driver = webdriver.Chrome("C:/Patrick/Programming/dhis2/chromedriver.exe")
 # dlPth will be the path to the download directory of the current user (on the system)
 dlPth = os.path.join(os.getenv('USERPROFILE'), 'Downloads')
 # destPth will just be a directory where I'll put all my (renamed) files in.
-destPth = dlPth+"\\dhis2data\\"
+destPth = dlPth+"\\dhis3data\\"
 
 wait = WebDriverWait(driver, 10)
 # Access url
@@ -169,12 +181,12 @@ dataCriteriaButton = "//input[@type='button' and @id='dataButton']"
 downloadButton = "//input[@type='button' and @value='Download as Excel']"
 prevYearButton.click()
 
-currentState = ""
-currentLGA = ""
-currentWard = ""
+currentState = ("", 0)
+currentLGA = ("", 0)
+currentWard = ("", 0)
 lastWorkedOn = revertLastWorkedOn(destPth)
 # 5. Traverse Tree
-stack = [root]
+stack = [(root, 0)]
 while(stack):
     # Set current Node
     current = stack[0]
@@ -187,26 +199,26 @@ while(stack):
     # if node is facility
     if(isFacility(name.text)):
         currentFacility = (name.text, current[1])
-        print("$ " + currentFacility)
+        print("$ " + currentFacility[0] + "... " + str(currentFacility[1]))
         current[0].click()
         time.sleep(1)
 
-        for year in range(2018, 2014, -1):
+        for year in range(2018, 2017, -1):
             yr = str(year)
-            for month in range(periodCounter, 0, -1):
+            for month in range(periodCounter, 10, -1):
                 mo = str(month)
                 extension = ".xls"
                 filename = currentState[0] + "-"+currentLGA[0] + "-" + \
                     currentWard[0] + "-"+currentFacility[0] + "-"+yr + "-"+mo
                 if not checkIfFileDownloaded(destPth, filename+extension):
-                    # logLastWorkedOn(destPth, filename, "PRE")
+                    logLastWorkedOn(destPth, filename, "PRE", currentLevel)
                     buttonWait(getReportButton)
                     time.sleep(3)
                     buttonWait(downloadButton)
                     time.sleep(3)
                     moveToDownloadFolder(dlPth, destPth, filename+extension)
                     buttonWait(dataCriteriaButton)
-                    # logLastWorkedOn(destPth, filename, "PST")
+                    logLastWorkedOn(destPth, filename, "PST", currentLevel)
                     time.sleep(1)
                 if month is not 1:
                     periodId.select_by_index(months[month-1])
@@ -228,26 +240,38 @@ while(stack):
         time.sleep(1)
         children = current[0].find_elements_by_xpath("./ul/*")
 
-        # check what lvl (fed/state/lga/ward) of current node & save position of node
-        if isState(name.text):
-            currentState = (name.text, current[1])
+        if name.text == "ng Federal Government":
             for index, child in enumerate(children, start=0):
-                if(index >= lastWorkedOn.state):
+                if(index <= lastWorkedOn[0]):
                     # saves html element & index of current level of tree into tuple
                     # 0->bc it pust the most recent child the start of the stack
                     stack.insert(0, (child, index))
+                    print("inserting states: " + child.text + "....."+ str(index))
+        # check what lvl (fed/state/lga/ward) of current node & save position of node
+        elif isState(name.text):
+            currentState = (name.text, current[1])
+            for index, child in enumerate(children, start=0):
+                if(index <= lastWorkedOn[1]):
+                    # saves html element & index of current level of tree into tuple
+                    # 0->bc it pust the most recent child the start of the stack
+                    stack.insert(0, (child, index))
+                    print("inserting LGAS: " + child.text + "....."+ str(index))
         elif isLGA(name.text):
             currentLGA = (name.text, current[1])
             for index, child in enumerate(children, start=0):
-                if(index >= lastWorkedOn.LGA):
-                    # saves html element & index of current level of tree into tuple 
-                    stack.insert(0, (child,index)) # 0->bc it pust the most recent child the start of the stack
+                if(index <= lastWorkedOn[2]):
+                    # saves html element & index of current level of tree into tuple
+                    # 0->bc it pust the most recent child the start of the stack
+                    stack.insert(0, (child, index))
+                    print("inserting wards: " + child.text + "....." + str(index))
 
         elif isWard(name.text):
             currentWard = (name.text, current[1])
             for index, child in enumerate(children, start=0):
-                if(index >= lastWorkedOn.ward):
-                    # saves html element & index of current level of tree into tuple 
-                    stack.insert(0, (child,index)) # 0->bc it pust the most recent child the start of the stack
+                # saves html element & index of current level of tree into tuple
+                # 0->bc it pust the most recent child the start of the stack
+                stack.insert(0, (child, index))
+        for i in stack:
+            print (i[0].text + "...." + str(i[1]))
 
 print("_____")
