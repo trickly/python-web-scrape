@@ -97,7 +97,8 @@ def revertLastWorkedOn(filePath):
         log =""
     print (log)
     if log == "":
-        indices = [0, 0, 0]
+        indices = [36,14,11]
+        print(indices)
     else:
         indices = log[0].split("-")
         for index,i in enumerate(indices):
@@ -164,10 +165,9 @@ periodType = Select(driver.find_element_by_name("periodType"))
 periodType.select_by_visible_text("Monthly")
 periodId = Select(driver.find_element_by_name("periodId"))
 periodCounter = 12
-prevYearButton = driver.find_element_by_xpath(
-    "//input[@type='button' and @value='Prev year']")
-nextYearButton = driver.find_element_by_xpath(
-    "//input[@type='button' and @value='Next year']")
+prevYearButton = "//input[@type='button' and @value='Prev year']"
+nextYearButton = "//input[@type='button' and @value='Next year']"
+    
 yearCounter = 4
 
 
@@ -179,7 +179,6 @@ root = main.find_element_by_xpath(
 getReportButton = "//input[@type='button' and @value='Get report']"
 dataCriteriaButton = "//input[@type='button' and @id='dataButton']"
 downloadButton = "//input[@type='button' and @value='Download as Excel']"
-prevYearButton.click()
 
 currentState = ("", 0)
 currentLGA = ("", 0)
@@ -202,10 +201,10 @@ while(stack):
         print("$ " + currentFacility[0] + "... " + str(currentFacility[1]))
         current[0].click()
         time.sleep(1)
-
-        for year in range(2018, 2017, -1):
+        buttonWait(prevYearButton)
+        for year in range(2018, 2014, -1):
             yr = str(year)
-            for month in range(periodCounter, 10, -1):
+            for month in range(periodCounter, 0, -1):
                 mo = str(month)
                 extension = ".xls"
                 filename = currentState[0] + "-"+currentLGA[0] + "-" + \
@@ -224,10 +223,11 @@ while(stack):
                     periodId.select_by_index(months[month-1])
 
             periodId.select_by_index(0)  # resets select(month)
-            prevYearButton.click()
+            buttonWait(prevYearButton)
+
 
         for year in range(0, yearCounter):  # resets year
-            nextYearButton.click()
+            buttonWait(nextYearButton)
 
     # if not facility, continue to traverse tree
     else:
