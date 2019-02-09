@@ -73,7 +73,10 @@ def checkIfFileDownloaded(dlPath, fileName):
             return True
     return False
 
-
+def formatFilename(filename):
+    filename = filename.replace("/", "~")
+    return filename
+    
 def logLastWorkedOn(filePath, fileName, fileStage, indices):
     try:
         os.remove(filePath + "log.txt")
@@ -135,7 +138,7 @@ driver = webdriver.Chrome("C:/Patrick/Programming/dhis2/chromedriver.exe")
 # dlPth will be the path to the download directory of the current user (on the system)
 dlPth = os.path.join(os.getenv('USERPROFILE'), 'Downloads')
 # destPth will just be a directory where I'll put all my (renamed) files in.
-destPth = dlPth+"\\dhis3data\\"
+destPth = dlPth+"\\dhis2data\\"
 
 wait = WebDriverWait(driver, 10)
 # Access url
@@ -179,6 +182,7 @@ root = main.find_element_by_xpath(
 getReportButton = "//input[@type='button' and @value='Get report']"
 dataCriteriaButton = "//input[@type='button' and @id='dataButton']"
 downloadButton = "//input[@type='button' and @value='Download as Excel']"
+buttonWait(prevYearButton)
 
 currentState = ("", 0)
 currentLGA = ("", 0)
@@ -201,7 +205,6 @@ while(stack):
         print("$ " + currentFacility[0] + "... " + str(currentFacility[1]))
         current[0].click()
         time.sleep(1)
-        buttonWait(prevYearButton)
         for year in range(2018, 2014, -1):
             yr = str(year)
             for month in range(periodCounter, 0, -1):
@@ -209,6 +212,7 @@ while(stack):
                 extension = ".xls"
                 filename = currentState[0] + "-"+currentLGA[0] + "-" + \
                     currentWard[0] + "-"+currentFacility[0] + "-"+yr + "-"+mo
+                filename = formatFilename(filename)
                 if not checkIfFileDownloaded(destPth, filename+extension):
                     logLastWorkedOn(destPth, filename, "PRE", currentLevel)
                     buttonWait(getReportButton)
