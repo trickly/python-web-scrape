@@ -76,7 +76,7 @@ def checkIfFileDownloaded(dlPath, fileName):
 def formatFilename(filename):
     filename = filename.replace("/", "~")
     return filename
-    
+
 def logLastWorkedOn(filePath, fileName, fileStage, indices):
     try:
         os.remove(filePath + "log.txt")
@@ -255,7 +255,8 @@ while(stack):
         elif isState(name.text):
             currentState = (name.text, current[1])
             for index, child in enumerate(children, start=0):
-                if(index <= lastWorkedOn[1]):
+                if((index <= lastWorkedOn[1]) and currentState[1] == lastWorkedOn[0]) or (currentState[1] < lastWorkedOn[0]):
+                    # second clause = last logged state
                     # saves html element & index of current level of tree into tuple
                     # 0->bc it pust the most recent child the start of the stack
                     stack.insert(0, (child, index))
@@ -263,7 +264,7 @@ while(stack):
         elif isLGA(name.text):
             currentLGA = (name.text, current[1])
             for index, child in enumerate(children, start=0):
-                if(index <= lastWorkedOn[2]):
+                if((index <= lastWorkedOn[2] and currentLGA[1] == lastWorkedOn[1]) or (currentLGA[1]< lastWorkedOn[1])):#and currentState[1] == lastWorkedOn[0]):
                     # saves html element & index of current level of tree into tuple
                     # 0->bc it pust the most recent child the start of the stack
                     stack.insert(0, (child, index))
