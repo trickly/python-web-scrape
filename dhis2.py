@@ -130,7 +130,28 @@ def buttonWait(xpath):
         WebDriverWait(driver, 10).until(element_present).click()
     except TimeoutException:
         print("Timed out waiting for page to load")
+        buttonWait(xpath)
 
+def buttonWaitByEle(ele):
+    element_present = ele
+    try:
+        WebDriverWait(driver, 10).until(element_present).click()
+    except TimeoutException:
+        print("Timed out waiting for page to load")
+
+def buttonWaitForClass(browser, total_wait=100):
+    try:
+        # Give only one class name, if you want to check multiple classes then 'and' will be use in XPATH
+        # e.g //*[contains(@class, "class_name") and contains(@class, "second_class_name")]
+        elem = browser.find_element_by_xpath('[contains(@class, "selected")]')
+        print("a lot")
+    except:
+        total_wait -= 1
+        time.sleep(1)
+        if total_wait > 1: buttonWaitForClass(browser, total_wait)
+    
+    print("yes")
+    elem.click()
 
 # Uses selenium
 # 1. Init with webdriver - Chrome
@@ -202,10 +223,12 @@ while(stack):
     # if node is facility
     if(isFacility(name.text)):
         currentFacility = (name.text, current[1])
-        print("$ " + currentFacility[0] + "... " + str(currentFacility[1]))
-        current[0].click()
-        time.sleep(1)
-        for year in range(2018, 2014, -1):
+        print("$ " + currentFacility[0] + "... " + str(currentFacility[1]) + " - "+ str(name) + " // " + str(current[0]))
+        #buttonWaitForClass(current[0])
+        #buttonWaitByEle(name)
+        name.click()
+        time.sleep(2)
+        for year in range(2018, 2014, -1):#4
             yr = str(year)
             for month in range(periodCounter, 0, -1):
                 mo = str(month)
@@ -216,9 +239,9 @@ while(stack):
                 if not checkIfFileDownloaded(destPth, filename+extension):
                     logLastWorkedOn(destPth, filename, "PRE", currentLevel)
                     buttonWait(getReportButton)
-                    time.sleep(3)
+                    time.sleep(2)
                     buttonWait(downloadButton)
-                    time.sleep(3)
+                    time.sleep(2)
                     moveToDownloadFolder(dlPth, destPth, filename+extension)
                     buttonWait(dataCriteriaButton)
                     logLastWorkedOn(destPth, filename, "PST", currentLevel)
@@ -264,7 +287,7 @@ while(stack):
         elif isLGA(name.text):
             currentLGA = (name.text, current[1])
             for index, child in enumerate(children, start=0):
-                if((index <= lastWorkedOn[2] and currentLGA[1] == lastWorkedOn[1]) or (currentLGA[1]< lastWorkedOn[1])):#and currentState[1] == lastWorkedOn[0]):
+                if((index <= lastWorkedOn[2] and currentLGA[1] == lastWorkedOn[1]) or (currentLGA[1]< lastWorkedOn[1])):
                     # saves html element & index of current level of tree into tuple
                     # 0->bc it pust the most recent child the start of the stack
                     stack.insert(0, (child, index))
