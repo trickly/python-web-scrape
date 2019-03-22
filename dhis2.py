@@ -169,12 +169,12 @@ driver.get('https://dhis2nigeria.org.ng/dhis/dhis-web-dashboard/')
 # assert "Python" in driver.title
 username = driver.find_element_by_name("j_username")
 username.clear()
-username.send_keys("uikenyei")
+username.send_keys("username")#
 # username.send_keys(Keys.RETURN)
 
 password = driver.find_element_by_name("j_password")
 password.clear()
-password.send_keys("!OURrock123")
+password.send_keys("password")#
 # password.send_keys(Keys.RETURN)
 driver.find_element_by_id("submit").click()
 
